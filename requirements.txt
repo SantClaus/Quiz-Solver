@@ -1,0 +1,6 @@
+anthropic          # Claude API client
+pynput             # Hotkeys globales (cross-platform)
+pystray            # System tray icon (Windows)
+Pillow             # Manipulación de íconos/imágenes
+pyperclip          # Clipboard read/write
+python-dotenv      # Carga de .env
