@@ -3,9 +3,17 @@
 Script de Python que corre en background (Windows) y permite consultar a Claude
 con hotkeys globales, con un ícono en el system tray para feedback visual.
 
-- `Ctrl+Shift+C` → copia el texto seleccionado y lo envía a Claude
-- `Ctrl+Shift+V` → pega la respuesta de Claude
+- `Ctrl+C` → copia el texto seleccionado (copia normal) y lo envía a Claude
+- `Ctrl+J` → igual que Ctrl+C pero usa el prompt alternativo `SYSTEM_PROMPT_2`
+- `ImprPant` (Print Screen) → manda el screenshot del clipboard a Claude como imagen
+- `Win+Shift+S` → recortás una zona y se manda ese recorte a Claude como imagen
+- Sostené **`J`** mientras sacás el screenshot (`ImprPant+J` / `Win+Shift+S+J`) para usar el prompt alternativo `SYSTEM_PROMPT_2` del `.env`
+- `Ctrl+V` → pega la respuesta de Claude (queda en el clipboard, así que pega normal)
 - Ícono en el tray: muestra el estado y permite activar/desactivar los hotkeys
+
+> Mientras los hotkeys están activos, `Ctrl+C` / `Ctrl+V` quedan "intervenidos":
+> copiás como siempre pero se consulta a Claude, y al pegar sale su respuesta.
+> Para copiar/pegar normal, desactivá los hotkeys desde el tray.
 
 ## Cómo correr
 

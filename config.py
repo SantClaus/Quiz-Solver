@@ -13,6 +13,10 @@ SYSTEM_PROMPT = os.getenv(
     "Respondé de forma concisa y directa. Sin formateo markdown innecesario.",
 ).strip()
 
+# Prompt alternativo para los screenshots con la tecla J sostenida
+# (ImprPant+J / Win+Shift+S+J). Si no está definido, cae en SYSTEM_PROMPT.
+SYSTEM_PROMPT_2 = os.getenv("SYSTEM_PROMPT_2", "").strip() or SYSTEM_PROMPT
+
 try:
     MAX_TOKENS = int(os.getenv("MAX_TOKENS", "1024"))
 except ValueError:

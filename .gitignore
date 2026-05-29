@@ -6,6 +6,9 @@ __pycache__/
 venv/
 env/
 
+# PyInstaller (build intermedio; dist/ ya se ignora más abajo)
+build/
+
 # Logs
 logs
 *.log

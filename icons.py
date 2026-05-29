@@ -17,8 +17,8 @@ def _circle(color: tuple[int, int, int, int]) -> Image.Image:
 
 
 def active() -> Image.Image:
-    """Verde: hotkeys activos, idle."""
-    return _circle((46, 204, 113, 255))
+    """Verde claro: hotkeys activos, idle (nada copiado todavía)."""
+    return _circle((144, 238, 144, 255))
 
 
 def inactive() -> Image.Image:
@@ -27,13 +27,22 @@ def inactive() -> Image.Image:
 
 
 def loading() -> Image.Image:
-    """Amarillo: esperando respuesta de la API."""
-    return _circle((241, 196, 15, 255))
+    """Azul claro: esperando respuesta de la API."""
+    return _circle((135, 206, 250, 255))
 
 
 def ready() -> Image.Image:
-    """Azul con check: respuesta lista para pegar."""
-    img = _circle((52, 152, 219, 255))
+    """Verde oscuro con check: respuesta lista para pegar."""
+    img = _circle((25, 111, 61, 255))
     draw = ImageDraw.Draw(img)
     draw.line([(20, 33), (29, 43), (45, 22)], fill=(255, 255, 255, 255), width=6)
+    return img
+
+
+def error() -> Image.Image:
+    """Rojo con cruz: hubo un error con Claude."""
+    img = _circle((231, 76, 60, 255))
+    draw = ImageDraw.Draw(img)
+    draw.line([(23, 23), (41, 41)], fill=(255, 255, 255, 255), width=6)
+    draw.line([(41, 23), (23, 41)], fill=(255, 255, 255, 255), width=6)
     return img
