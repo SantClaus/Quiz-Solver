@@ -5,10 +5,11 @@ siempre-on-top, pegada al cursor, mostrando la última respuesta de Claude. Al
 soltar, se oculta. Es solo para leer "de reojo": la respuesta también queda en
 el clipboard para pegar con Ctrl+V.
 
-Corre Tkinter en su **propio thread** porque el thread principal lo ocupa el
-loop del system tray (pystray). El Tk vive confinado a este thread: ningún otro
-lo toca, solo lee dos callbacks (`should_show` / `get_text`) que sí son seguros
-de invocar desde acá.
+En **Windows** corre Tkinter en su **propio thread** (`start()`), porque el thread
+principal lo ocupa el loop del system tray (pystray). En **macOS** Cocoa exige que
+Tkinter viva en el thread principal, así que ahí se arranca con `run_main()` (y el
+tray va "detached"). En ambos casos el Tk queda confinado a un único thread: nadie
+más lo toca, solo se leen dos callbacks (`should_show` / `get_text`).
 """
 
 import threading
@@ -30,10 +31,15 @@ class Overlay:
         self._label: "tk.Label | None" = None
         self._visible = False
         self._last_text: "str | None" = None
-        self._thread = threading.Thread(target=self._run, daemon=True)
 
     def start(self) -> None:
-        self._thread.start()
+        """Arranca el overlay en su PROPIO thread (Windows)."""
+        threading.Thread(target=self._run, daemon=True).start()
+
+    def run_main(self) -> None:
+        """Arranca el overlay en el thread ACTUAL y bloquea (macOS: Tkinter debe
+        correr en el thread principal)."""
+        self._run()
 
     def _run(self) -> None:
         self._root = tk.Tk()

@@ -133,22 +133,21 @@ class App:
             daemon=True,
         ).start()
 
-    def on_fullscreen(self, justify: bool = False) -> None:
-        # Ctrl+0: captura toda la pantalla a memoria, sin notificación.
+    def on_fullscreen(self) -> None:
+        # Ctrl/Cmd+0: captura toda la pantalla a memoria, sin notificación.
         if not self._enabled:
             return
-        threading.Thread(
-            target=self._fullscreen_flow,
-            kwargs={"justify": justify},
-            daemon=True,
-        ).start()
+        threading.Thread(target=self._fullscreen_flow, daemon=True).start()
 
-    def _fullscreen_flow(self, justify: bool = False) -> None:
+    def _fullscreen_flow(self) -> None:
         image = grab_screen()
         if image is None:
             return
-        system = config.SYSTEM_PROMPT_2 if justify else config.SYSTEM_PROMPT
-        self._ask(lambda cancel: self._client.ask_image(image, cancel, system=system))
+        self._ask(
+            lambda cancel: self._client.ask_image(
+                image, cancel, system=config.SCREEN_PROMPT
+            )
+        )
 
     def _screenshot_flow(self, wait_new: bool, justify: bool = False) -> None:
         # Margen amplio: ImprPant puede estar configurado para abrir la
@@ -248,9 +247,17 @@ class App:
     # --- Arranque -------------------------------------------------------
     def run(self) -> None:
         self._hotkeys.start()
-        self._overlay.start()
-        self._set_active()
-        self._tray.run()  # bloquea hasta que se cierra el tray
+        if config.IS_MAC:
+            # Cocoa exige que Tkinter (el overlay) viva en el thread principal,
+            # así que el tray va "detached" y el overlay toma el thread principal.
+            self._tray.run_detached()
+            self._set_active()
+            self._overlay.run_main()  # bloquea con el mainloop de Tk
+        else:
+            # En Windows el overlay corre en su propio thread y el tray bloquea.
+            self._overlay.start()
+            self._set_active()
+            self._tray.run()  # bloquea hasta que se cierra el tray
 
 
 def main() -> None:

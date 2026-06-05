@@ -12,6 +12,8 @@ import pyperclip
 from PIL import Image, ImageGrab
 from pynput.keyboard import Controller, Key
 
+import config
+
 # Cuánto esperar a que el SO termine de copiar la selección tras el Ctrl+C
 # real del usuario antes de leer el clipboard.
 _COPY_SETTLE = 0.15
@@ -91,9 +93,12 @@ def grab_screen() -> "Image.Image | None":
     A diferencia de ImprPant / Win+Shift+S (que dejan la imagen en el clipboard y
     pueden disparar la Herramienta de Recortes), esto lee los píxeles directo con
     `ImageGrab.grab`: silencioso, invisible y sin pisar lo que el usuario copió.
-    `all_screens=True` abarca todos los monitores.
+    En Windows `all_screens=True` abarca todos los monitores; ese parámetro es
+    exclusivo de Windows, así que en macOS llamamos a `grab()` pelado.
     """
     try:
+        if config.IS_MAC:
+            return ImageGrab.grab()
         return ImageGrab.grab(all_screens=True)
     except Exception:
         return None

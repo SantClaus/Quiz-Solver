@@ -47,3 +47,11 @@ class Tray:
     def run(self) -> None:
         """Arranca el loop del tray. Bloquea el thread actual."""
         self.icon.run()
+
+    def run_detached(self) -> None:
+        """Arranca el tray sin bloquear (su loop corre aparte).
+
+        En macOS lo usamos para liberar el thread principal: Cocoa exige que
+        Tkinter (el overlay) viva ahí, así que el tray queda "detached".
+        """
+        self.icon.run_detached()
