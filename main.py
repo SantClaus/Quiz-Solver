@@ -10,8 +10,15 @@ import threading
 import config
 import icons
 from ai_client import AIClient
-from clipboard import copy_selection, read_image, read_selection, set_clipboard
+from clipboard import (
+    copy_selection,
+    grab_screen,
+    read_image,
+    read_selection,
+    set_clipboard,
+)
 from hotkeys import Hotkeys
+from overlay import Overlay
 from tray import Tray
 
 # Cuánto mostrar el ícono "ready" antes de volver a "active".
@@ -39,6 +46,12 @@ class App:
             self.on_paste,
             self.on_screenshot,
             self.on_snip,
+            self.on_fullscreen,
+        )
+        # Cuadradito junto al cursor con la última respuesta mientras Ctrl+9.
+        self._overlay = Overlay(
+            should_show=lambda: self._enabled and self._hotkeys.overlay_held(),
+            get_text=lambda: self._last_answer,
         )
 
     # --- Transiciones de ícono ------------------------------------------
@@ -119,6 +132,23 @@ class App:
             kwargs={"wait_new": True, "justify": justify},
             daemon=True,
         ).start()
+
+    def on_fullscreen(self, justify: bool = False) -> None:
+        # Ctrl+0: captura toda la pantalla a memoria, sin notificación.
+        if not self._enabled:
+            return
+        threading.Thread(
+            target=self._fullscreen_flow,
+            kwargs={"justify": justify},
+            daemon=True,
+        ).start()
+
+    def _fullscreen_flow(self, justify: bool = False) -> None:
+        image = grab_screen()
+        if image is None:
+            return
+        system = config.SYSTEM_PROMPT_2 if justify else config.SYSTEM_PROMPT
+        self._ask(lambda cancel: self._client.ask_image(image, cancel, system=system))
 
     def _screenshot_flow(self, wait_new: bool, justify: bool = False) -> None:
         # Margen amplio: ImprPant puede estar configurado para abrir la
@@ -213,10 +243,12 @@ class App:
 
     def quit(self) -> None:
         self._hotkeys.stop()
+        self._overlay.stop()
 
     # --- Arranque -------------------------------------------------------
     def run(self) -> None:
         self._hotkeys.start()
+        self._overlay.start()
         self._set_active()
         self._tray.run()  # bloquea hasta que se cierra el tray
 

@@ -8,8 +8,10 @@ Script de Python que corre en background (Windows) y permite consultar a Claude 
 - `Ctrl+J` → como Ctrl+C pero con `SYSTEM_PROMPT_2`; como Ctrl+J no copia solo, simulamos un Ctrl+C (con un flag que evita que ese Ctrl+C re-dispare el hotkey de captura)
 - `ImprPant` (Print Screen) → el SO deja el screenshot en el clipboard; lo leemos con `PIL.ImageGrab` y lo enviamos a Claude como imagen (mismo `SYSTEM_PROMPT`). Print Screen en Windows manda solo el evento de *release*, así que se detecta en el `on_release` del listener de tracking, no por `GlobalHotKeys`
 - `Win+Shift+S` → recorte de selección; esperamos (hasta 15s) a que aparezca una imagen *nueva* en el clipboard y la enviamos igual que el screenshot
-- `ImprPant+J` / `Win+Shift+S+J` → mismo screenshot pero con `SYSTEM_PROMPT_2` (la J sostenida la detecta un listener aparte; no es un hotkey propio)
+- `Ctrl+0` → captura toda la pantalla con `PIL.ImageGrab.grab(all_screens=True)` directo a memoria y la envía como imagen (mismo `SYSTEM_PROMPT`). No usa el clipboard ni dispara notificación: es totalmente silencioso. Es un hotkey propio de `GlobalHotKeys`
+- `ImprPant+J` / `Win+Shift+S+J` / `Ctrl+0+J` → mismo screenshot pero con `SYSTEM_PROMPT_2` (la J sostenida la detecta un listener aparte; no es un hotkey propio)
 - `Ctrl+V` → al tener respuesta lista la dejamos en el clipboard, así el `Ctrl+V` normal del usuario la pega
+- `Ctrl+9` (sostenido) → mientras se mantiene Ctrl+9 se muestra un cuadradito chiquito pegado al cursor con la última respuesta; al soltar se oculta. El estado "Ctrl+9 sostenido" lo detecta el listener de tracking (no es un hotkey propio) y el overlay (Tkinter en su propio thread) lo consulta por polling
 - Ícono en tray muestra el estado del sistema y permite activar/desactivar los hotkeys
 
 > **Importante:** `Ctrl+C` / `Ctrl+V` se registran con `GlobalHotKeys` de pynput,
@@ -25,8 +27,9 @@ ai-clipboard/
 ├── main.py           # Entry point, arranca el tray y el listener de hotkeys
 ├── hotkeys.py        # Registro y manejo de hotkeys globales con pynput
 ├── tray.py           # Ícono en system tray con pystray
+├── overlay.py        # Cuadradito flotante junto al cursor (Ctrl+9) con Tkinter
 ├── ai_client.py      # Llamada a Claude API con anthropic SDK
-├── clipboard.py      # Lectura y escritura del clipboard con pyperclip
+├── clipboard.py      # Lectura/escritura del clipboard y captura de pantalla
 ├── config.py         # Carga de configuración desde .env
 ├── icons/            # Imágenes del ícono en distintos estados
 │   ├── active.png    # Verde o ícono normal - hotkeys activos
@@ -55,6 +58,16 @@ ai-clipboard/
 3. Si hay texto nuevo: enviarlo a Claude API de forma **asíncrona** (no bloquear)
 4. Cambiar ícono tray a "loading"
 5. Al recibir respuesta: guardarla en memoria, **dejarla en el clipboard**, cambiar ícono a "ready" brevemente (2-3 seg), luego volver a "active"
+
+### Ctrl+0 (capturar toda la pantalla, silencioso)
+1. `clipboard.grab_screen()` hace `ImageGrab.grab(all_screens=True)` → imagen en memoria, sin tocar el clipboard ni notificar
+2. Se manda a Claude como imagen por el mismo `_ask` que los screenshots (estados de ícono iguales)
+3. Con `J` sostenida usa `SYSTEM_PROMPT_2`
+
+### Ctrl+9 (ver la respuesta en un overlay)
+1. Mientras `Ctrl+9` están sostenidos, `Hotkeys.overlay_held()` devuelve True (lo sabe por el tracking de teclas)
+2. `overlay.py` corre Tkinter en su propio thread (el principal lo ocupa pystray) y por polling muestra/oculta un `Toplevel` sin bordes, on-top, pegado al cursor, con `self._last_answer`
+3. Solo muestra la **última** respuesta; al soltar Ctrl+9 se oculta. La respuesta sigue disponible para pegar con Ctrl+V
 
 ### Ctrl+V (pegar respuesta)
 1. La respuesta ya quedó en el clipboard al recibirla, así que el `Ctrl+V` nativo del usuario la pega solo (no lo simulamos)

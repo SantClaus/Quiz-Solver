@@ -7,8 +7,10 @@ con hotkeys globales, con un ícono en el system tray para feedback visual.
 - `Ctrl+J` → igual que Ctrl+C pero usa el prompt alternativo `SYSTEM_PROMPT_2`
 - `ImprPant` (Print Screen) → manda el screenshot del clipboard a Claude como imagen
 - `Win+Shift+S` → recortás una zona y se manda ese recorte a Claude como imagen
-- Sostené **`J`** mientras sacás el screenshot (`ImprPant+J` / `Win+Shift+S+J`) para usar el prompt alternativo `SYSTEM_PROMPT_2` del `.env`
+- `Ctrl+0` → captura **toda la pantalla** a memoria y la manda a Claude, sin notificación ni flash ni tocar el clipboard (silencioso)
+- Sostené **`J`** mientras sacás el screenshot (`ImprPant+J` / `Win+Shift+S+J` / `Ctrl+0+J`) para usar el prompt alternativo `SYSTEM_PROMPT_2` del `.env`
 - `Ctrl+V` → pega la respuesta de Claude (queda en el clipboard, así que pega normal)
+- `Ctrl+9` (mantener) → muestra un cuadradito chiquito pegado al cursor con la última respuesta; al soltar, desaparece
 - Ícono en el tray: muestra el estado y permite activar/desactivar los hotkeys
 
 > Mientras los hotkeys están activos, `Ctrl+C` / `Ctrl+V` quedan "intervenidos":

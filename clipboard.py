@@ -85,6 +85,20 @@ def copy_selection(timeout: float = 0.4) -> str:
     return text.strip()
 
 
+def grab_screen() -> "Image.Image | None":
+    """Captura toda la pantalla a memoria, sin tocar el clipboard ni notificar.
+
+    A diferencia de ImprPant / Win+Shift+S (que dejan la imagen en el clipboard y
+    pueden disparar la Herramienta de Recortes), esto lee los píxeles directo con
+    `ImageGrab.grab`: silencioso, invisible y sin pisar lo que el usuario copió.
+    `all_screens=True` abarca todos los monitores.
+    """
+    try:
+        return ImageGrab.grab(all_screens=True)
+    except Exception:
+        return None
+
+
 def _grab_image() -> "Image.Image | None":
     """Imagen actual del clipboard, o None si no hay ninguna."""
     try:
