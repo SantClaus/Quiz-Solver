@@ -9,6 +9,9 @@ env/
 # PyInstaller (build intermedio; dist/ ya se ignora más abajo)
 build/
 
+# Carpeta de distribución (contiene .env con la API key — NO subir)
+release/
+
 # Logs
 logs
 *.log
