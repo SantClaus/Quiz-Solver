@@ -1,5 +1,7 @@
 """Ícono en system tray con pystray."""
 
+import functools
+
 import pystray
 
 import icons
@@ -31,14 +33,19 @@ class Tray:
                         if self._is_enabled(key)
                         else f"✗ {label}"
                     ),
-                    lambda icon, item, key=key: self._toggle(icon, key),
+                    # functools.partial (no __code__) en vez de lambda: pystray
+                    # rechaza acciones con co_argcount > 2, y un lambda con
+                    # `key=key` cuenta 3 args. partial liga la key y deja que
+                    # pystray invoque con (icon, item).
+                    functools.partial(self._toggle, key),
                 )
             )
         items.append(pystray.Menu.SEPARATOR)
         items.append(pystray.MenuItem("Salir", self._quit))
         return pystray.Menu(*items)
 
-    def _toggle(self, icon, key) -> None:
+    def _toggle(self, key, icon, item) -> None:
+        # partial liga `key`; pystray pasa (icon, item) al invocar.
         self._on_toggle(key)
         icon.update_menu()
 
