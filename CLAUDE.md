@@ -83,16 +83,24 @@ ai-clipboard/
 2. El callback solo limpia la respuesta guardada de memoria y vuelve el ícono a "active"
 
 ### Toggle activar/desactivar (desde tray)
-- Click derecho en el ícono → menú con opción "Activar/Desactivar hotkeys"
-- Al desactivar: ícono cambia a gris, hotkeys dejan de responder
-- Al activar: vuelve al estado normal
+- Click derecho en el ícono → menú con **un toggle por grupo de hotkeys**:
+  - **Captura** (`Ctrl/Cmd+0`, `Ctrl/Cmd+9`) — cross-platform
+  - **Texto** (`Ctrl+C` / `J` / `V`) — solo Windows
+  - **Recorte** (`Win+Shift+S`, `ImprPant`) — solo Windows
+- Cada toggle prende/apaga solo su grupo (estado independiente en `self._enabled`,
+  un dict por grupo). En macOS solo aparece el grupo **Captura**.
+- Al apagar un grupo se cancela cualquier consulta en curso.
+- El ícono refleja el estado **global**: gris solo si **todos** los grupos están
+  apagados; si queda al menos uno activo, sigue verde.
 
 ## Comportamiento del ícono tray
 
 - El ícono debe ser **pequeño y simple** (16x16 o 32x32 px)
 - Tooltip con el estado actual al hover
 - Click derecho → menú con:
-  - "✓ Hotkeys activos" / "✗ Hotkeys desactivados" (toggle)
+  - "✓/✗ Captura (Ctrl/Cmd+0, Ctrl/Cmd+9)" (toggle del grupo de captura)
+  - "✓/✗ Texto (Ctrl+C / J / V)" (toggle del grupo de texto, solo Windows)
+  - "✓/✗ Recorte (Win+Shift+S, ImprPant)" (toggle del grupo de recorte, solo Windows)
   - Separador
   - "Salir"
 - La transición a "ready" debe ser **sutil**: cambia el ícono 2-3 segundos y vuelve, sin sonido ni notificación

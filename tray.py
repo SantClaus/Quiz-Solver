@@ -6,7 +6,10 @@ import icons
 
 
 class Tray:
-    def __init__(self, on_toggle, on_quit, is_enabled) -> None:
+    def __init__(self, groups, on_toggle, on_quit, is_enabled) -> None:
+        # groups: lista de (key, label). Cada uno es un grupo de hotkeys con su
+        # propio toggle en el menú (captura / texto / recorte).
+        self._groups = groups
         self._on_toggle = on_toggle
         self._on_quit = on_quit
         self._is_enabled = is_enabled
@@ -18,21 +21,25 @@ class Tray:
         )
 
     def _build_menu(self) -> "pystray.Menu":
-        return pystray.Menu(
-            pystray.MenuItem(
-                lambda item: (
-                    "✓ Hotkeys activos"
-                    if self._is_enabled()
-                    else "✗ Hotkeys desactivados"
-                ),
-                self._toggle,
-            ),
-            pystray.Menu.SEPARATOR,
-            pystray.MenuItem("Salir", self._quit),
-        )
+        items = []
+        for key, label in self._groups:
+            items.append(
+                pystray.MenuItem(
+                    # key/label por default-arg para capturar el valor del loop.
+                    lambda item, key=key, label=label: (
+                        f"✓ {label}"
+                        if self._is_enabled(key)
+                        else f"✗ {label}"
+                    ),
+                    lambda icon, item, key=key: self._toggle(icon, key),
+                )
+            )
+        items.append(pystray.Menu.SEPARATOR)
+        items.append(pystray.MenuItem("Salir", self._quit))
+        return pystray.Menu(*items)
 
-    def _toggle(self, icon, item) -> None:
-        self._on_toggle()
+    def _toggle(self, icon, key) -> None:
+        self._on_toggle(key)
         icon.update_menu()
 
     def _quit(self, icon, item) -> None:

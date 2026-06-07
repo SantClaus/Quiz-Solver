@@ -24,13 +24,26 @@ from tray import Tray
 # Cuánto mostrar el ícono "ready" antes de volver a "active".
 READY_DURATION = 2.5
 
+# Grupos de hotkeys, cada uno con su propio toggle en el tray. La key se usa en
+# el dict de estado (`self._enabled`) y en los checks de cada callback.
+#   screen → Ctrl/Cmd+0 (captura full) y Ctrl/Cmd+9 (overlay)  — cross-platform
+#   text   → Ctrl+C / J / V                                     — solo Windows
+#   snip   → Win+Shift+S e ImprPant (+J)                        — solo Windows
+_GROUPS_COMMON = [("screen", "Captura (Ctrl/Cmd+0, Ctrl/Cmd+9)")]
+_GROUPS_WINDOWS = [
+    ("text", "Texto (Ctrl+C / J / V)"),
+    ("snip", "Recorte (Win+Shift+S, ImprPant)"),
+]
+HOTKEY_GROUPS = _GROUPS_COMMON + ([] if config.IS_MAC else _GROUPS_WINDOWS)
+
 
 class App:
     def __init__(self) -> None:
         config.validate()
         self._client = AIClient()
 
-        self._enabled = True
+        # Un flag de habilitación por grupo (ver HOTKEY_GROUPS).
+        self._enabled = {key: True for key, _ in HOTKEY_GROUPS}
         self._response: str | None = None
         self._last_answer: str | None = None
         self._cancel_event: threading.Event | None = None
@@ -39,7 +52,12 @@ class App:
         # Ignora el hotkey de Ctrl+C que dispara nuestro propio Ctrl+J simulado.
         self._suppress_capture = False
 
-        self._tray = Tray(self.toggle_enabled, self.quit, lambda: self._enabled)
+        self._tray = Tray(
+            HOTKEY_GROUPS,
+            self.toggle_enabled,
+            self.quit,
+            lambda key: self._enabled[key],
+        )
         self._hotkeys = Hotkeys(
             self.on_capture,
             self.on_capture_alt,
@@ -50,9 +68,13 @@ class App:
         )
         # Cuadradito junto al cursor con la última respuesta mientras Ctrl+9.
         self._overlay = Overlay(
-            should_show=lambda: self._enabled and self._hotkeys.overlay_held(),
+            should_show=lambda: self._enabled["screen"]
+            and self._hotkeys.overlay_held(),
             get_text=lambda: self._last_answer,
         )
+
+    def _any_enabled(self) -> bool:
+        return any(self._enabled.values())
 
     # --- Transiciones de ícono ------------------------------------------
     def _set_active(self) -> None:
@@ -75,14 +97,14 @@ class App:
     # --- Captura de texto (Ctrl+C / Ctrl+J) -----------------------------
     def on_capture(self) -> None:
         # El Ctrl+C que simulamos para Ctrl+J vuelve a entrar acá: lo ignoramos.
-        if not self._enabled or self._suppress_capture:
+        if not self._enabled["text"] or self._suppress_capture:
             return
         # El callback corre en el thread del listener: delegamos el trabajo.
         threading.Thread(target=self._capture_flow, daemon=True).start()
 
     def on_capture_alt(self) -> None:
         # Ctrl+J: igual que Ctrl+C pero con el prompt alternativo.
-        if not self._enabled:
+        if not self._enabled["text"]:
             return
         threading.Thread(
             target=self._capture_flow, kwargs={"justify": True}, daemon=True
@@ -115,7 +137,7 @@ class App:
     # --- Screenshot (ImprPant / Win+Shift+S) ----------------------------
     def on_screenshot(self, justify: bool = False) -> None:
         # ImprPant: la captura ya está en el clipboard.
-        if not self._enabled:
+        if not self._enabled["snip"]:
             return
         threading.Thread(
             target=self._screenshot_flow,
@@ -125,7 +147,7 @@ class App:
 
     def on_snip(self, justify: bool = False) -> None:
         # Win+Shift+S: hay que esperar a que el usuario termine de recortar.
-        if not self._enabled:
+        if not self._enabled["snip"]:
             return
         threading.Thread(
             target=self._screenshot_flow,
@@ -135,7 +157,7 @@ class App:
 
     def on_fullscreen(self) -> None:
         # Ctrl/Cmd+0: captura toda la pantalla a memoria, sin notificación.
-        if not self._enabled:
+        if not self._enabled["screen"]:
             return
         threading.Thread(target=self._fullscreen_flow, daemon=True).start()
 
@@ -208,12 +230,12 @@ class App:
         timer.start()
 
     def _revert_to_active(self) -> None:
-        if self._enabled:
+        if self._any_enabled():
             self._set_active()
 
     # --- Pegado (Ctrl+V) ------------------------------------------------
     def on_paste(self) -> None:
-        if not self._enabled:
+        if not self._enabled["text"]:
             return
         threading.Thread(target=self._paste_flow, daemon=True).start()
 
@@ -224,20 +246,24 @@ class App:
         with self._lock:
             had_response = self._response is not None
             self._response = None
-        if had_response and self._enabled:
+        if had_response and self._enabled["text"]:
             if self._ready_timer is not None:
                 self._ready_timer.cancel()
             self._set_active()
 
     # --- Toggle / salir -------------------------------------------------
-    def toggle_enabled(self) -> None:
-        self._enabled = not self._enabled
-        if self._enabled:
-            self._set_active()
-        else:
+    def toggle_enabled(self, key: str) -> None:
+        self._enabled[key] = not self._enabled[key]
+        if not self._enabled[key]:
+            # Al apagar un grupo cancelamos cualquier consulta en curso (pudo
+            # haberla disparado ese mismo grupo).
             with self._lock:
                 if self._cancel_event is not None:
                     self._cancel_event.set()
+        # El ícono refleja el estado global: gris solo si TODO está apagado.
+        if self._any_enabled():
+            self._set_active()
+        else:
             self._set_disabled()
 
     def quit(self) -> None:

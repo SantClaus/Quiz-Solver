@@ -12,6 +12,8 @@ con hotkeys globales, con un ícono en el system tray para feedback visual.
 - `Ctrl+V` → pega la respuesta de Claude (queda en el clipboard, así que pega normal)
 - `Ctrl+9` (`Cmd+9` en Mac, mantener) → muestra un cuadradito chiquito pegado al cursor con la última respuesta; al soltar, desaparece
 - Ícono en el tray: muestra el estado y permite activar/desactivar los hotkeys
+  por grupo — **Captura** (`Ctrl/Cmd+0`, `Ctrl/Cmd+9`), **Texto** (`Ctrl+C/J/V`)
+  y **Recorte** (`Win+Shift+S`, `ImprPant`) — cada uno con su propio toggle
 
 > **Windows vs. macOS:** los atajos de texto (`Ctrl+C`/`J`/`V`), Print Screen y
 > `Win+Shift+S` son **solo de Windows**. En macOS funcionan únicamente
@@ -32,7 +34,8 @@ python main.py
 ```
 
 El script arranca minimizado en el system tray (sin ventana). Click derecho en
-el ícono → menú con el toggle de hotkeys y la opción de salir.
+el ícono → menú con un toggle por grupo de hotkeys (Captura / Texto / Recorte) y
+la opción de salir. El ícono queda gris solo si apagás todos los grupos.
 
 | Estado | Ícono | Significado |
 |--------|-------|-------------|
