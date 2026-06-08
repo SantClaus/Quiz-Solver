@@ -89,6 +89,8 @@ ai-clipboard/
   - **Recorte** (`Win+Shift+S`, `ImprPant`) — solo Windows
 - Cada toggle prende/apaga solo su grupo (estado independiente en `self._enabled`,
   un dict por grupo). En macOS solo aparece el grupo **Captura**.
+- **Por default solo arranca activo el grupo Captura** (`Ctrl/Cmd+0`, `Ctrl/Cmd+9`);
+  Texto y Recorte arrancan apagados y se prenden desde el menú cuando se necesiten.
 - Al apagar un grupo se cancela cualquier consulta en curso.
 - El ícono refleja el estado **global**: gris solo si **todos** los grupos están
   apagados; si queda al menos uno activo, sigue verde.

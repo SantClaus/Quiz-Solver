@@ -42,8 +42,10 @@ class App:
         config.validate()
         self._client = AIClient()
 
-        # Un flag de habilitación por grupo (ver HOTKEY_GROUPS).
-        self._enabled = {key: True for key, _ in HOTKEY_GROUPS}
+        # Un flag de habilitación por grupo (ver HOTKEY_GROUPS). Por default solo
+        # arranca activo el grupo "screen" (Ctrl/Cmd+0 y Ctrl/Cmd+9); los demás
+        # se prenden desde el menú del tray cuando se necesiten.
+        self._enabled = {key: key == "screen" for key, _ in HOTKEY_GROUPS}
         self._response: str | None = None
         self._last_answer: str | None = None
         self._cancel_event: threading.Event | None = None
